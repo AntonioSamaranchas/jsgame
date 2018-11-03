@@ -68,22 +68,72 @@ class Actor {
 					throw new Error('Метод принимает параметр типа Actor!');
 				}	else {
 
-					const distance = Math.sqrt(Math.pow((isActor.left - this.left), 2) + Math.pow((isActor.top - this.top), 2));
-					const isPositive = (Math.abs(isActor.x + isActor.y) === (isActor.x + isActor.y));
-					
-					if (!isPositive) {
+					let toLeft, toRight, toTop, toBottom;
+					toLeft   = ((this.left - isActor.right) >= 0);
+					toRight  = ((isActor.left - this.right) >= 0);
+					toTop    = ((this.top - isActor.bottom) >= 0);
+					toBottom = ((isActor.top - this.bottom) >= 0);
+
+					if (Math.abs(isActor.x + isActor.y) === (isActor.x + isActor.y)) {
+						return false;
+					} else if (toLeft || toRight || toTop || toBottom) {
 						return false;
 					} else {
-						if (distance > 100) { /* очень далеко - это сколько?*/
-							return false;
-						} else if (distance == 1) { /* это если оба объекта размером 1*1, а если нет?*/
-							return false;
-						} else if (distance == 0) {
-							return true;
-						}
+						return true;
 					}
-
 				}
 		}
 	}
 }
+
+/*class Player extends Actor {
+	constructor(speed, coords) {
+		super(speed);
+		this.position = coords.plus(new Vector(0, -0.5));
+		this.size = new Vector(0.8, 1.5);
+		this.type = 'player';
+	}
+}*/
+
+class Level {
+	constructor(grid = [], actors = []) {
+		this.grid = grid;
+		this.actors = actors;
+		this.status = null;
+		this.finishDelay = 1;
+		this.height = grid.length;
+		this.player = this.actors.find(function(isPlayer) {return isPlayer.type === 'player'});
+		this.width  = this.grid.length == 0 ? 0 : Math.max.apply(null, this.grid.reduce(function(memo, el) {
+			memo.push(el.length); 
+			return memo;
+		}, []));
+	}
+
+	isFinished() {
+		return this.status !== null && this.finishDelay < 0 ? true : false;
+	}
+
+	actorAt(isActor) {
+		if ((isActor === undefined) || !(isActor instanceof Actor)) {
+			throw new Error('Метод принимает обязательный параметр типа Actor!');
+		} else if (this.grid.length === 0 || this.actors.length < 2) {
+			return undefined;
+		}	else {
+			let cross = undefined;
+			for (let actor of this.actors) {
+				if (actor.isIntersect(isActor)) {
+					cross = actor;
+					break;
+				}
+			}
+			return cross;
+		}
+	}
+
+	obstacleAt() {
+
+	}
+}
+
+
+
