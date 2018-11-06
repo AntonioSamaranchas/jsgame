@@ -114,15 +114,54 @@ class Level {
     /*}*/
   }
 
-  obstacleAt(finalPos, sizeAct) {
+  obstacleAt(finalPos = new Vector(), sizeAct = new Vector(1, 1)) {
+    /* проверим на принадлежность классу */
     if (!(finalPos instanceof Vector) && !(sizeAct instanceof Vector)) {
       throw new Error('Параметры должны быть класса Vector');
-    } else {
-
-
-
     }
+    /* определим целочисленность координат и размера*/
+    const isIntegerPos = ((Math.trunc(finalPos.x) === finalPos.x) && ((Math.trunc(finalPos.y) === finalPos.y)));
+    const isIntegerSize = ((Math.trunc(sizeAct.x) === sizeAct.x) && ((Math.trunc(sizeAct.y) === sizeAct.y)));
+    const isTrue = (!(isIntegerPos && isIntegerSize)); /* если одно из двух нецелочисленное - будет истина*/
 
+    const finalActor = new Actor(finalPos, sizeAct);/* определим результирующий дв. объект */
+    let cellValue = undefined; /* сюда будем искать значение ячейки из grid */
+    
+    /* обойдем всю площадь по точкам и посмотрим нет ли в сетке препятствия */
+    for (let y = finalActor.top; y <= finalActor.bottom; y++) {
+      for (let x = finalActor.left; x <= finalActor.right; x++) {
+        if (this.grid[y][x]) { /* если что-то нашлось помимо undefined */
+          cellValue = this.grid[y][x]; /* запишем в переменную и прервем цикл */
+          break;
+        } 
+      }
+      if (cellValue) { /* т.к у нас есть верхнеуровневый цикл - надо и его прервать, тк мы нашли что искали */
+        break;
+      }
+    }
+    /* посмотрим что же в переменной */
+    if (cellValue) { /* если не undefined */
+      
+      if (cellValue === 'wall' && isTrue) { /* проверим на значение и целочисленность и вернем валл в случае тру */
+        return 'wall';
+      } else {
+        return cellValue; /* иначе либо валл либо лава */
+      }
+
+    } else { /* если ничего не нашли на пути дв. объекта проверим не выступает ли он за пределы */
+      const outLeft = finalActor.left < 0;
+      const outTop = finalActor.top < 0;
+      const outRight = finalActor.right > this.width;
+      const outBottom = finalActor.bottom > this.height;
+
+      if (outBottom) { /* если выступает снизу - лава */
+        return 'lava';
+      } else if (outLeft || outTop || outRight) { /* слева снизу справа - валл*/
+        return 'wall';
+      } else { /* иначе -undefined */
+        return undefined;
+      }
+    }
   }
 
   removeActor(actor) {
