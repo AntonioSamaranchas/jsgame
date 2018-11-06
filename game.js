@@ -20,7 +20,7 @@ class Vector {
 }
 
 class Actor {
-  constructor(position = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
+  constructor(position = new Vector(), size = new Vector(1, 1), speed = new Vector()) {
     if ((position instanceof Vector) && (size instanceof Vector) && (speed instanceof Vector)) {
       this.pos = position;
       this.size = size;
@@ -34,7 +34,7 @@ class Actor {
 
   }
 
-  get type() {
+   get type() {
     return 'actor';
   }
 
@@ -72,11 +72,10 @@ class Actor {
           const toRight  = ((actor.left - this.right) >= 0);
           const toTop    = ((this.top - actor.bottom) >= 0);
           const toBottom = ((actor.top - this.bottom) >= 0);
+          const negative = ((actor.pos.x === this.pos.x && actor.pos.y === this.pos.y) && (Math.abs(actor.size.x + actor.size.y) !== (actor.size.x + actor.size.y)));
+          /*const negative = ((actor.pos.x === this.pos.x && actor.pos.y === this.pos.y) && (actor.size.x < 0 || actor.size.y < 0));*/
 
-          /*if (Math.abs(isActor.x + isActor.y) === (isActor.x + isActor.y)) {
-            return false;
-          } else*/ 
-          if (toLeft || toRight || toTop || toBottom) {
+          if (negative || toLeft || toRight || toTop || toBottom) {
             return false;
           } else {
             return true;
@@ -86,15 +85,6 @@ class Actor {
   }
 }
 
-/*class Player extends Actor {
-  constructor(speed, coords) {
-    super(speed);
-    this.position = coords.plus(new Vector(0, -0.5));
-    this.size = new Vector(0.8, 1.5);
-    this.type = 'player';
-  }
-}*/
-
 class Level {
   constructor(grid = [], actors = []) {
     this.grid = grid;
@@ -102,7 +92,7 @@ class Level {
     this.status = null;
     this.finishDelay = 1;
     this.height = grid.length;
-    this.player = this.actors.find(function(isPlayer) {return isPlayer.type === 'player'});
+    this.player = this.actors.find(function(player) {return player.type === 'player'});
     this.width  = this.grid.length == 0 ? 0 : Math.max.apply(null, this.grid.reduce(function(memo, el) {
       memo.push(el.length); 
       return memo;
@@ -114,23 +104,64 @@ class Level {
   }
 
   actorAt(actor) {
-    if ((actor === undefined) || !(actor instanceof Actor)) {
+    if (actor === undefined || !(actor instanceof Actor)) {
       throw new Error('Метод принимает обязательный параметр типа Actor!');
     } else if (this.grid.length === 0 || this.actors.length < 2) {
       return undefined;
     } else {
-      let cross = undefined;
-      for (let currentActor of this.actors) {
-        if (currentActor.isIntersect(actor)) {
-          cross = currentActor;
-          break;
-        }
-      }
-      return cross;
+      return this.actors.find(function(cross) {return cross.isIntersect(actor)});
     }
   }
 
-  obstacleAt() {
+  obstacleAt(finalPos, sizeAct) {
+    if (!(finalPos instanceof Vector) && !(sizeAct instanceof Vector)) {
+      throw new Error('Параметры должны быть класса Vector');
+    } else {
+
+
+
+    }
 
   }
+
+  removeActor(actor) {
+    if (this.actors.includes(actor)) {
+      const indexDel = this.actors.indexOf(actor);
+      this.actors.splice(indexDel, 1);
+    }
+  }
+
+  noMoreActors(actorType) {
+    const desired = this.actors.find(function(actor) {
+      return actor.type === actorType;
+    });
+    return desired === undefined ? true : false;
+  }
+
+  playerTouched(obstacleOrType, touched = new Actor()) {
+    if (this.status === null) {
+      if (obstacleOrType === 'lava' || obstacleOrType === 'fireball') {
+        this.status = 'lost';
+      } else if (obstacleOrType === 'coin' && touched.type === 'coin') {
+        this.removeActor(touched);
+        if (this.noMoreActors(touched.type)) {
+          this.status = 'won';
+        }
+      }
+    }
+  }
+}
+
+class Player extends Actor {
+  constructor(position) {
+    super();
+    /*this.pos = position.plus(new Vector(0, -0.5));*/
+    /*this.pos.plus(position);*/
+    this.size = new Vector(0.8, 1.5);
+  }
+
+  get type() {
+    return 'player';
+  }
+
 }
