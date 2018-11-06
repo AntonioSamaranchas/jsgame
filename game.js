@@ -106,11 +106,12 @@ class Level {
   actorAt(actor) {
     if (actor === undefined || !(actor instanceof Actor)) {
       throw new Error('Метод принимает обязательный параметр типа Actor!');
-    } else if (this.grid.length === 0 || this.actors.length < 2) {
+    } 
+    /*else if (this.grid.length === 0 || this.actors.length < 2) {
       return undefined;
-    } else {
-      return this.actors.find(function(cross) {return cross.isIntersect(actor)});
-    }
+    } else {*/
+    return this.actors.find(function(cross) {return cross.isIntersect(actor);});
+    /*}*/
   }
 
   obstacleAt(finalPos, sizeAct) {
@@ -153,15 +154,13 @@ class Level {
 }
 
 class Player extends Actor {
-  constructor(position) {
+  constructor(position = new Vector()) {
     super();
-    /*this.pos = position.plus(new Vector(0, -0.5));*/
-    /*this.pos.plus(position);*/
+    this.pos = position.plus(new Vector(0, -0.5));
     this.size = new Vector(0.8, 1.5);
   }
 
   get type() {
     return 'player';
   }
-
 }
