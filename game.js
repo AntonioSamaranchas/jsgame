@@ -209,8 +209,11 @@ class LevelParser {
     for (let y = 0; y < arrayStrings.length; y++) {
       for (let x = 0; x < arrayStrings[y].length; x++) {
         let Constr = this.actorFromSymbol(arrayStrings[y][x]);
-        if (Constr !== undefined && (Constr instanceof Actor)) {
-          mass.push(new Constr(new Vector(x, y)));
+        if (typeof Constr === 'function') {
+          let newObj = new Constr(new Vector(x, y));
+          if ((newObj instanceof Actor)) {
+            mass.push(newObj);
+          }
         }
       }
     }
