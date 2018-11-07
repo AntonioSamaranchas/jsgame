@@ -177,6 +177,48 @@ class Level {
   }
 }
 
+class LevelParser {
+  constructor(dictionary = {}) {
+    this.dictionary = dictionary;
+  }
+
+  actorFromSymbol(char) {
+    return this.dictionary[char];
+  }
+
+  obstacleFromSymbol(char) {
+    const mapping = {
+      'x' : 'wall',
+      '!' : 'lava'
+    };
+    return mapping[char];
+  }
+
+  createGrid(arrayStrings = []) {
+    const grid = [];
+    for (let currString of arrayStrings) {
+      grid.push(Array.from(currString, function(x, i) {
+        return new LevelParser().obstacleFromSymbol(x);
+      }));
+    }
+    return grid;
+  }
+
+  createActors(arrayStrings = []) {
+    const mass = [];
+    for (let y = 0; y < arrayStrings.length; y++) {
+      for (let x = 0; x < arrayStrings[y].length; x++) {
+        let Constr = this.actorFromSymbol(arrayStrings[y][x]);
+        if (Constr !== undefined && (Constr instanceof Actor)) {
+          mass.push(new Constr(new Vector(x, y)));
+        }
+      }
+    }
+    return mass;  
+  }
+}
+
+
 class Player extends Actor {
   constructor(position = new Vector()) {
     super();
