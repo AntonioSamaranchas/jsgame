@@ -219,8 +219,11 @@ class LevelParser {
     }
     return mass;  
   }
-}
 
+  parse(arrayStrings = []) {
+    return new Level(this.createGrid(arrayStrings), this.createActors(arrayStrings));
+  }
+}
 
 class Player extends Actor {
   constructor(position = new Vector()) {
@@ -232,4 +235,20 @@ class Player extends Actor {
   get type() {
     return 'player';
   }
+}
+
+class Fireball extends Actor {
+  constructor(position = new Vector(), speed = new Vector()) {
+    super();
+    this.pos = position;
+    this.speed = speed;
+  }
+
+  get type() {
+    return 'fireball';
+  }
+
+  getNextPosition(time = 1) {
+    return new Vector(this.pos.x, this.pos.y).plus(this.speed.times(time));
+  } 
 }
