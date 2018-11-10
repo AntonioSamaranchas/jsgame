@@ -305,10 +305,10 @@ class Coin extends Actor {
     super();
     this.pos = position.plus(new Vector(0.2, 0.1));
     this.size = new Vector(0.6, 0.6);
-    this.basePos = position;
     this.springSpeed = 8;
     this.springDist = 0.07;
     this.spring = rand(0, 2*Math.PI);
+    this.basePos = this.pos;
   }
 
   get type() {
@@ -324,10 +324,25 @@ class Coin extends Actor {
   }
 
   getNextPosition(time = 1) {
-
+    this.updateSpring(time);
+    return new Vector(this.basePos.x, this.basePos.y).plus(this.getSpringVector());
   }
 
   act(time) {
     this.pos = this.getNextPosition(time);
   }
 }
+
+const dictionary = {
+  '@': Player,
+  'o': Coin,
+  '=': HorizontalFireball,
+  '|': VerticalFireball,
+  'v': FireRain
+}
+
+const parser = new LevelParser(dictionary);
+loadLevels().then(function(strJson) {
+  const schemas = JSON.parse(strJson);
+  runGame(schemas, parser, DOMDisplay).then(() => alert('Вы победили!'));
+});
