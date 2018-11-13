@@ -1,4 +1,4 @@
-'use strict';
+ 'use strict';
 
 class Vector {
   constructor(x = 0, y = 0) {
@@ -53,44 +53,20 @@ class Actor {
   }
 
   isIntersect(actor) {
-    // переделать на if (непонятно зачем тут switch)
-    switch (actor) {
-      case undefined : 
-        throw new Error('Метод принимает обязательный параметр!');
-        // если в case throw или return, то break можно не писать
-        break;
-      case this :
-        return false;
-        break;
-      default :
-        
-        if (!(actor instanceof Actor)) {
-          throw new Error('Метод принимает параметр типа Actor!');
-        // else можно убрать
-        } else {
-
-          // не форматируйте никогда так код
-          // первый же автоформат убьёт всё это и будут лишние изменения в гите
-          // зачем вычитать если можно просто сравнить числа?
-          const toLeft   = ((this.left - actor.right) >= 0);
-          // если объект левее, то уже понятно,
-          // что он не пересекается с заданным и дальше считаь ничего не нужно
-          const toRight  = ((actor.left - this.right) >= 0);
-          const toTop    = ((this.top - actor.bottom) >= 0);
-          const toBottom = ((actor.top - this.bottom) >= 0);
-          // что это за проверка?
-          const negative = ((actor.pos.x === this.pos.x && actor.pos.y === this.pos.y) && (Math.abs(actor.size.x + actor.size.y) !== (actor.size.x + actor.size.y)));
-          /*const negative = ((actor.pos.x === this.pos.x && actor.pos.y === this.pos.y) && (actor.size.x < 0 || actor.size.y < 0));*/
-
-          // тут нужно обратить условие и убрать if
-          // (написать просто return ...)
-          if (negative || toLeft || toRight || toTop || toBottom) {
-            return false;
-          } else {
-            return true;
-          }
-        }
+    if (!(actor instanceof Actor)) {
+      throw new Error('Метод принимает обязательный параметр типа Actor!');
     }
+
+    if (actor === this) {
+      return false;
+    }
+
+    const toLeft = (this.left >= actor.right);
+    const toRight = (actor.left >= this.right);
+    const toTop = (this.top >= actor.bottom);
+    const toBottom = (actor.top >= this.bottom);
+
+    return !(toLeft || toRight || toTop || toBottom);  
   }
 }
 
@@ -123,66 +99,49 @@ class Level {
     return this.actors.find((cross) => cross.isIntersect(actor));
   }
 
-  obstacleAt(finalPos = new Vector(), sizeAct = new Vector(1, 1)) {
+  obstacleAt(finalPos = new Vector(0, 0), sizeAct = new Vector(1, 1)) {
     if (!(finalPos instanceof Vector) && !(sizeAct instanceof Vector)) {
       throw new Error('Параметры должны быть класса Vector');
     }
 
-    // вы создаёте объект только для того, чтобы 2 раза сложить 2 числа
-    // можно обойтись без него
-    const finalActor = new Actor(finalPos, sizeAct);/* определим результирующий дв. объект */
-    const outLeft = finalActor.left < 0; /* если выпирает слева */
-    const outTop = finalActor.top < 0; /* если выпирает сверху */
-    const outRight = finalActor.right > this.width; /* если выпирает справа */
-    const outBottom = finalActor.bottom > this.height; /* если выпирает снизу */
+    let bottom = finalPos.y + sizeAct.y;
+    let right = finalPos.x + sizeAct.x;
+    const outLeft = finalPos.x < 0; 
+    const outTop = finalPos.y < 0;
+    const outRight = (finalPos.x + sizeAct.x) > this.width;
+    const outBottom = (finalPos.y + sizeAct.y) > this.height;
 
-    if (outBottom) { /* если выступает снизу - лава */
+    if (outBottom) {
       return 'lava';
-    // else можно убрать
-    } else if (outLeft || outTop || outRight) { /* слева снизу справа - валл*/
+    }
+
+    if (outLeft || outTop || outRight) {
       return 'wall';
     }
-
-    // лишняя переменная
-    let cellValue = undefined; /* сюда будем искать значение ячейки из grid */
     
-    /* обойдем всю площадь по точкам и посмотрим нет ли в сетке препятствия */
-    // округлённые значения лучше сохранить в переменных,
-    // чтобы не округлять на каждой итерации
-    for (let y = Math.floor(finalActor.top); y < Math.ceil(finalActor.bottom); y++) {
-      for (let x = Math.floor(finalActor.left); x < Math.ceil(finalActor.right); x++) {
-        // this.grid[y][x] лучше записать в переменную, чтобы 2 раза не писать
-        if (this.grid[y][x]) { /* если что-то нашлось помимо undefined */
-          // почему не вернуть значение здесь
-          cellValue = this.grid[y][x]; /* запишем в переменную и прервем цикл */
-          break;
+    const top = Math.floor(finalPos.y);
+    const left = Math.floor(finalPos.x);
+    bottom = Math.ceil(finalPos.y + sizeAct.y);
+    right = Math.ceil(finalPos.x + sizeAct.x);
+
+    for (let y = top; y < bottom; y++) {
+      for (let x = left; x < right; x++) {
+        let cellValue = this.grid[y][x];
+        if (cellValue) {
+          return cellValue;
         } 
       }
-      if (cellValue) { /* т.к у нас есть верхнеуровневый цикл - надо и его прервать, тк мы нашли что искали */
-        break;
-      }
     }
-    return cellValue; /* иначе либо валл либо лава  либо */
   }
 
   removeActor(actor) {
-    // поиск объекта в массиве осуществляется 2 раза
-    // нужно сделать, чтобы был 1
-    if (this.actors.includes(actor)) {
-      const indexDel = this.actors.indexOf(actor);
-      this.actors.splice(indexDel, 1);
-    }
+    this.actors.splice(this.actors.indexOf(actor), 1);
   }
 
   noMoreActors(actorType) {
-    // тут лучше использовать метод, который возвращает true/false
-    const desired = this.actors.find(function(actor) {
-      return actor.type === actorType;
-    });
-    return desired === undefined ? true : false;
+    return !this.actors.some((actor) => actor.type === actorType);
   }
 
-  // значение по-умолчанию по-моему лишнее
   playerTouched(obstacleOrType, touched = new Actor()) {
     // если обратить условие и написать в if return,
     // уменьшится вложенность кода
@@ -359,6 +318,10 @@ class Coin extends Actor {
   act(time) {
     this.pos = this.getNextPosition(time);
   }
+}
+
+function rand(max = 10, min = 0) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 const dictionary = {
