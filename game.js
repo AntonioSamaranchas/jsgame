@@ -1,11 +1,5 @@
 'use strict';
 
-function rand(min, max) {
-  // почему ceil?
-  // зачем прибавлять единицу, а потом отнимать?
-  return Math.ceil((max - min + 1) * Math.random()) + min - 1;
-}
-
 class Vector {
   constructor(x = 0, y = 0) {
     this.x = x;
@@ -14,14 +8,9 @@ class Vector {
 
   plus(vector) {
     if (!(vector instanceof Vector)) {
-        // разное форматирование (4 пробела, а дальше 2)
-        throw new Error('Можно прибавлять к вектору только вектор типа Vector');
-    // else можно убрать
-    // если будет выброшено исключение,
-    // то функция прекратит свою работу
-    } else {
-        return new Vector(this.x + vector.x, this.y + vector.y);
-    }
+      throw new Error('Можно прибавлять к вектору только вектор типа Vector');
+    }   
+    return new Vector(this.x + vector.x, this.y + vector.y);
   }
 
   times(multi) {
@@ -30,19 +19,13 @@ class Vector {
 }
 
 class Actor {
-  // не опускайте аргументы конструктора
-  // если кто-нибудь изменит значения аргументов по-умолчанию,
-  // ваш код перестанет работать
-  constructor(position = new Vector(), size = new Vector(1, 1), speed = new Vector()) {
-    if ((position instanceof Vector) && (size instanceof Vector) && (speed instanceof Vector)) {
-      this.pos = position;
-      this.size = size;
-      this.speed = speed;
-    } else {
-      // проверку аргументов лучше делать в начале функции,
-      // а потом писать основной код
+  constructor(position = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
+    if (!(position instanceof Vector && size instanceof Vector && speed instanceof Vector)) {
       throw new Error('Один из параметров не является объектом типа Вектор');
-    }
+    }  
+    this.pos = position;
+    this.size = size;
+    this.speed = speed;
   }
 
   act() {
@@ -118,16 +101,12 @@ class Level {
     this.status = null;
     this.finishDelay = 1;
     this.height = grid.length;
-    // тут лучше использовать стрелочную функцию
-    this.player = this.actors.find(function(player) {return player.type === 'player'});
-    // не используйте ==
-    // это можеет привести к ошибкам
-    // используйте ===
+    this.player = this.actors.find((player) => player.type === 'player');
     // вместо .apply можно использовать возможности ES6
     // вместо проверки this.grid.length
     // можно просто добавить 0 в список аргументов Math.max
     // Math.max и reduce тут используются неправильно, посмотрите внимательно
-    this.width  = this.grid.length == 0 ? 0 : Math.max.apply(null, this.grid.reduce(function(memo, el) {
+    this.width  = this.grid.length === 0 ? 0 : Math.max.apply(null, this.grid.reduce(function(memo, el) {
       memo.push(el.length); 
       return memo;
     }, []));
@@ -138,20 +117,13 @@ class Level {
   }
 
   actorAt(actor) {
-    // первая половина проверки лишняя
-    if (actor === undefined || !(actor instanceof Actor)) {
+    if (!(actor instanceof Actor)) {
       throw new Error('Метод принимает обязательный параметр типа Actor!');
     } 
-    /*else if (this.grid.length === 0 || this.actors.length < 2) {
-      return undefined;
-    } else {*/
-    // лучше стрелочная функция
-    return this.actors.find(function(cross) {return cross.isIntersect(actor);});
-    /*}*/
+    return this.actors.find((cross) => cross.isIntersect(actor));
   }
 
   obstacleAt(finalPos = new Vector(), sizeAct = new Vector(1, 1)) {
-    /* проверим на принадлежность классу */
     if (!(finalPos instanceof Vector) && !(sizeAct instanceof Vector)) {
       throw new Error('Параметры должны быть класса Vector');
     }
@@ -230,6 +202,10 @@ class Level {
 class LevelParser {
   constructor(dictionary = {}) {
     this.dictionary = dictionary;
+    this.mapping = {
+      'x' : 'wall',
+      '!' : 'lava'
+    };
   }
 
   actorFromSymbol(char) {
@@ -237,13 +213,7 @@ class LevelParser {
   }
 
   obstacleFromSymbol(char) {
-    // лучше сделать полем класса, или вынести за его пределы,
-    // чтобы при каждом вызове не создавать объект
-    const mapping = {
-      'x' : 'wall',
-      '!' : 'lava'
-    };
-    return mapping[char];
+    return this.mapping[char];
   }
 
   createGrid(arrayStrings = []) {
@@ -261,23 +231,19 @@ class LevelParser {
   }
 
   createActors(arrayStrings = []) {
-    // плохое название переменной
-    const mass = [];
+    const arrayActors = [];
     for (let y = 0; y < arrayStrings.length; y++) {
       for (let x = 0; x < arrayStrings[y].length; x++) {
-        // если значение присваивается переменной 1 раз,
-        // то лучше использовать const
-        let Constr = this.actorFromSymbol(arrayStrings[y][x]);
+        const Constr = this.actorFromSymbol(arrayStrings[y][x]);
         if (typeof Constr === 'function') {
-          // const
-          let newObj = new Constr(new Vector(x, y));
+          const newObj = new Constr(new Vector(x, y));
           if ((newObj instanceof Actor)) {
-            mass.push(newObj);
+            arrayActors.push(newObj);
           }
         }
       }
     }
-    return mass;  
+    return arrayActors;  
   }
 
   parse(arrayStrings = []) {
@@ -286,8 +252,7 @@ class LevelParser {
 }
 
 class Player extends Actor {
-  // не опускайте аргумента конструктоар Vector
-  constructor(position = new Vector()) {
+  constructor(position = new Vector(0, 0)) {
     super();
     // pos, size, speed должены задаваться через родительский конструктор
     this.pos = position.plus(new Vector(0, -0.5));
@@ -300,8 +265,7 @@ class Player extends Actor {
 }
 
 class Fireball extends Actor {
-  // не опускайте аргумента конструктоар Vector
-  constructor(position = new Vector(), speed = new Vector()) {
+  constructor(position = new Vector(0, 0), speed = new Vector(0, 0)) {
     // pos, size, speed должены задаваться через родительский конструктор
     super();
     this.pos = position;
@@ -313,8 +277,7 @@ class Fireball extends Actor {
   }
 
   getNextPosition(time = 1) {
-    // лишнее создание вектора
-    return new Vector(this.pos.x, this.pos.y).plus(this.speed.times(time));
+    return this.pos.plus(this.speed.times(time));
   }
 
   handleObstacle() {
@@ -333,8 +296,7 @@ class Fireball extends Actor {
 }
 
 class HorizontalFireball extends Fireball {
-  // не опускайте аргумента конструктоар Vector
-  constructor(position = new Vector()) {
+  constructor(position = new Vector(0, 0)) {
     // pos, size, speed должены задаваться через родительский конструктор
     super();
     this.pos = position;
@@ -343,8 +305,7 @@ class HorizontalFireball extends Fireball {
 } 
 
 class VerticalFireball extends Fireball {
-  // не опускайте аргумента конструктоар Vector
-  constructor(position = new Vector()) {
+  constructor(position = new Vector(0, 0)) {
     super();
     // pos, size, speed должены задаваться через родительский конструктор
     this.pos = position;
@@ -353,8 +314,7 @@ class VerticalFireball extends Fireball {
 }
 
 class FireRain extends Fireball {
-  // не опускайте аргумента конструктоар Vector
-  constructor(position = new Vector()) {
+  constructor(position = new Vector(0, 0)) {
     super();
     // pos, size, speed должены задаваться через родительский конструктор
     this.pos = position;
@@ -368,8 +328,7 @@ class FireRain extends Fireball {
 }
 
 class Coin extends Actor {
-  // не опускайте аргумента конструктоар Vector
-  constructor(position = new Vector()) {
+  constructor(position = new Vector(0, 0)) {
     super();
     // pos, size, speed должены задаваться через родительский конструктор
     this.pos = position.plus(new Vector(0.2, 0.1));
@@ -394,8 +353,7 @@ class Coin extends Actor {
 
   getNextPosition(time = 1) {
     this.updateSpring(time);
-    // лишнее создание ветора
-    return new Vector(this.basePos.x, this.basePos.y).plus(this.getSpringVector());
+    return this.basePos.plus(this.getSpringVector());
   }
 
   act(time) {
