@@ -78,14 +78,7 @@ class Level {
     this.finishDelay = 1;
     this.height = grid.length;
     this.player = this.actors.find((player) => player.type === 'player');
-    // вместо .apply можно использовать возможности ES6
-    // вместо проверки this.grid.length
-    // можно просто добавить 0 в список аргументов Math.max
-    // Math.max и reduce тут используются неправильно, посмотрите внимательно
-    this.width  = this.grid.length === 0 ? 0 : Math.max.apply(null, this.grid.reduce(function(memo, el) {
-      memo.push(el.length); 
-      return memo;
-    }, []));
+    this.width = Math.max(0, ...this.grid.map((el) => el.length));
   }
 
   isFinished() {
@@ -142,17 +135,19 @@ class Level {
     return !this.actors.some((actor) => actor.type === actorType);
   }
 
-  playerTouched(obstacleOrType, touched = new Actor()) {
-    // если обратить условие и написать в if return,
-    // уменьшится вложенность кода
-    if (this.status === null) {
-      if (obstacleOrType === 'lava' || obstacleOrType === 'fireball') {
-        this.status = 'lost';
-      } else if (obstacleOrType === 'coin' && touched.type === 'coin') {
-        this.removeActor(touched);
-        if (this.noMoreActors(touched.type)) {
-          this.status = 'won';
-        }
+  playerTouched(obstacleOrType, touched) {
+    if (!(this.status === null)) { 
+      return;
+    }
+    
+    if (obstacleOrType === 'lava' || obstacleOrType === 'fireball') {
+      this.status = 'lost';
+    }
+    
+    if (obstacleOrType === 'coin' && touched.type === 'coin') {
+      this.removeActor(touched);
+      if (this.noMoreActors(touched.type)) {
+        this.status = 'won';
       }
     }
   }
@@ -176,17 +171,7 @@ class LevelParser {
   }
 
   createGrid(arrayStrings = []) {
-    // этот метод можно упростить использовав метод map 2 раза
-    const grid = [];
-    for (let currString of arrayStrings) {
-      // для преобразования строки в массив лучше использовать split
-      // (так понятно, что работаем со строкой)
-      grid.push(Array.from(currString, function(x, i) {
-        // не нужно создавать новый объект
-        return new LevelParser().obstacleFromSymbol(x);
-      }));
-    }
-    return grid;
+    return arrayStrings.map((currString) => currString.split('').map((el) => this.obstacleFromSymbol(el)));
   }
 
   createActors(arrayStrings = []) {
@@ -211,11 +196,8 @@ class LevelParser {
 }
 
 class Player extends Actor {
-  constructor(position = new Vector(0, 0)) {
-    super();
-    // pos, size, speed должены задаваться через родительский конструктор
-    this.pos = position.plus(new Vector(0, -0.5));
-    this.size = new Vector(0.8, 1.5);
+constructor(position = new Vector(0, 0), size, speed) {
+    super(position.plus(new Vector(0, -0.5)), size = new Vector(0.8, 1.5), speed);
   }
 
   get type() {
@@ -224,11 +206,8 @@ class Player extends Actor {
 }
 
 class Fireball extends Actor {
-  constructor(position = new Vector(0, 0), speed = new Vector(0, 0)) {
-    // pos, size, speed должены задаваться через родительский конструктор
-    super();
-    this.pos = position;
-    this.speed = speed;
+  constructor(position = new Vector(0, 0), speed = new Vector(0, 0), size) {
+    super(position, size, speed);
   }
 
   get type() {
@@ -255,29 +234,20 @@ class Fireball extends Actor {
 }
 
 class HorizontalFireball extends Fireball {
-  constructor(position = new Vector(0, 0)) {
-    // pos, size, speed должены задаваться через родительский конструктор
-    super();
-    this.pos = position;
-    this.speed = new Vector(2, );
+  constructor(position = new Vector(0, 0), speed, size) {
+    super(position, speed = new Vector(2, ), size);
   }
 } 
 
 class VerticalFireball extends Fireball {
-  constructor(position = new Vector(0, 0)) {
-    super();
-    // pos, size, speed должены задаваться через родительский конструктор
-    this.pos = position;
-    this.speed = new Vector(0, 2);
+  constructor(position = new Vector(0, 0), speed, size) {
+    super(position, speed = new Vector(0, 2), size);
   }
 }
 
 class FireRain extends Fireball {
-  constructor(position = new Vector(0, 0)) {
-    super();
-    // pos, size, speed должены задаваться через родительский конструктор
-    this.pos = position;
-    this.speed = new Vector(0, 3);
+  constructor(position = new Vector(0, 0), speed, size) {
+    super(position, speed = new Vector(0, 3), size);
     this.basePos = position;
   }
 
@@ -287,11 +257,8 @@ class FireRain extends Fireball {
 }
 
 class Coin extends Actor {
-  constructor(position = new Vector(0, 0)) {
-    super();
-    // pos, size, speed должены задаваться через родительский конструктор
-    this.pos = position.plus(new Vector(0.2, 0.1));
-    this.size = new Vector(0.6, 0.6);
+  constructor(position = new Vector(0, 0), size, speed) {
+    super(position.plus(new Vector(0.2, 0.1)), size = new Vector(0.6, 0.6), speed);
     this.springSpeed = 8;
     this.springDist = 0.07;
     this.spring = rand(0, 2*Math.PI);
