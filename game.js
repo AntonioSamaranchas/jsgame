@@ -61,6 +61,7 @@ class Actor {
       return false;
     }
 
+    // если переданный актёр левее, то зачем дальше что-то проверять?
     const toLeft = (this.left >= actor.right);
     const toRight = (actor.left >= this.right);
     const toTop = (this.top >= actor.bottom);
@@ -82,6 +83,7 @@ class Level {
   }
 
   isFinished() {
+    // зачем тут тренарный оператор сравнения?
     return this.status !== null && this.finishDelay < 0 ? true : false;
   }
 
@@ -97,9 +99,14 @@ class Level {
       throw new Error('Параметры должны быть класса Vector');
     }
 
+    // присвоенные здесь значения не используются
     let bottom = finalPos.y + sizeAct.y;
     let right = finalPos.x + sizeAct.x;
-    const outLeft = finalPos.x < 0; 
+    // эти переменные испльзуются только внутри if
+    // это усложняет чтение кода, т.к. припытке понять что за условие в if
+    // нужно возвращаться назад и смотреть, что записано в переменных
+    // лучше просто поместить уловия в if
+    const outLeft = finalPos.x < 0;
     const outTop = finalPos.y < 0;
     const outRight = (finalPos.x + sizeAct.x) > this.width;
     const outBottom = (finalPos.y + sizeAct.y) > this.height;
@@ -128,6 +135,7 @@ class Level {
   }
 
   removeActor(actor) {
+    // метод сработает неправильно, если объекта на будет в массиве
     this.actors.splice(this.actors.indexOf(actor), 1);
   }
 
@@ -197,6 +205,8 @@ class LevelParser {
 
 class Player extends Actor {
 constructor(position = new Vector(0, 0), size, speed) {
+    // зачем size =
+    // ?
     super(position.plus(new Vector(0, -0.5)), size = new Vector(0.8, 1.5), speed);
   }
 
@@ -235,6 +245,10 @@ class Fireball extends Actor {
 
 class HorizontalFireball extends Fireball {
   constructor(position = new Vector(0, 0), speed, size) {
+    // speed = new Vector(2, )
+    // это конструкция записывает новое значение в аргумет,
+    // а потом передаёт значение в вызов функции
+    // new Vector(2, ) где второй аргумент?
     super(position, speed = new Vector(2, ), size);
   }
 } 
