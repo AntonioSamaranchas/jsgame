@@ -1,4 +1,4 @@
- 'use strict';
+'use strict';
 
 class Vector {
   constructor(x = 0, y = 0) {
@@ -61,13 +61,7 @@ class Actor {
       return false;
     }
 
-    // если переданный актёр левее, то зачем дальше что-то проверять?
-    const toLeft = (this.left >= actor.right);
-    const toRight = (actor.left >= this.right);
-    const toTop = (this.top >= actor.bottom);
-    const toBottom = (actor.top >= this.bottom);
-
-    return !(toLeft || toRight || toTop || toBottom);  
+    return !((this.left >= actor.right) || (actor.left >= this.right) || (this.top >= actor.bottom) || (actor.top >= this.bottom));  
   }
 }
 
@@ -83,8 +77,7 @@ class Level {
   }
 
   isFinished() {
-    // зачем тут тренарный оператор сравнения?
-    return this.status !== null && this.finishDelay < 0 ? true : false;
+    return (this.status !== null && this.finishDelay < 0);
   }
 
   actorAt(actor) {
@@ -99,30 +92,18 @@ class Level {
       throw new Error('Параметры должны быть класса Vector');
     }
 
-    // присвоенные здесь значения не используются
-    let bottom = finalPos.y + sizeAct.y;
-    let right = finalPos.x + sizeAct.x;
-    // эти переменные испльзуются только внутри if
-    // это усложняет чтение кода, т.к. припытке понять что за условие в if
-    // нужно возвращаться назад и смотреть, что записано в переменных
-    // лучше просто поместить уловия в if
-    const outLeft = finalPos.x < 0;
-    const outTop = finalPos.y < 0;
-    const outRight = (finalPos.x + sizeAct.x) > this.width;
-    const outBottom = (finalPos.y + sizeAct.y) > this.height;
-
-    if (outBottom) {
+    if ((finalPos.y + sizeAct.y) > this.height) {
       return 'lava';
     }
 
-    if (outLeft || outTop || outRight) {
+    if ((finalPos.x < 0) || (finalPos.y < 0) || ((finalPos.x + sizeAct.x) > this.width)) {
       return 'wall';
     }
     
     const top = Math.floor(finalPos.y);
     const left = Math.floor(finalPos.x);
-    bottom = Math.ceil(finalPos.y + sizeAct.y);
-    right = Math.ceil(finalPos.x + sizeAct.x);
+    const bottom = Math.ceil(finalPos.y + sizeAct.y);
+    const right = Math.ceil(finalPos.x + sizeAct.x);
 
     for (let y = top; y < bottom; y++) {
       for (let x = left; x < right; x++) {
@@ -135,8 +116,7 @@ class Level {
   }
 
   removeActor(actor) {
-    // метод сработает неправильно, если объекта на будет в массиве
-    this.actors.splice(this.actors.indexOf(actor), 1);
+    this.actors = this.actors.filter((el) => el !== actor);
   }
 
   noMoreActors(actorType) {
@@ -205,9 +185,7 @@ class LevelParser {
 
 class Player extends Actor {
 constructor(position = new Vector(0, 0), size, speed) {
-    // зачем size =
-    // ?
-    super(position.plus(new Vector(0, -0.5)), size = new Vector(0.8, 1.5), speed);
+    super(position.plus(new Vector(0, -0.5)), new Vector(0.8, 1.5), speed);
   }
 
   get type() {
@@ -245,23 +223,19 @@ class Fireball extends Actor {
 
 class HorizontalFireball extends Fireball {
   constructor(position = new Vector(0, 0), speed, size) {
-    // speed = new Vector(2, )
-    // это конструкция записывает новое значение в аргумет,
-    // а потом передаёт значение в вызов функции
-    // new Vector(2, ) где второй аргумент?
-    super(position, speed = new Vector(2, ), size);
+    super(position, new Vector(2, 0), size);
   }
 } 
 
 class VerticalFireball extends Fireball {
   constructor(position = new Vector(0, 0), speed, size) {
-    super(position, speed = new Vector(0, 2), size);
+    super(position, new Vector(0, 2), size);
   }
 }
 
 class FireRain extends Fireball {
   constructor(position = new Vector(0, 0), speed, size) {
-    super(position, speed = new Vector(0, 3), size);
+    super(position, new Vector(0, 3), size);
     this.basePos = position;
   }
 
@@ -272,7 +246,7 @@ class FireRain extends Fireball {
 
 class Coin extends Actor {
   constructor(position = new Vector(0, 0), size, speed) {
-    super(position.plus(new Vector(0.2, 0.1)), size = new Vector(0.6, 0.6), speed);
+    super(position.plus(new Vector(0.2, 0.1)), new Vector(0.6, 0.6), speed);
     this.springSpeed = 8;
     this.springDist = 0.07;
     this.spring = rand(0, 2*Math.PI);
