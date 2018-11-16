@@ -61,7 +61,7 @@ class Actor {
       return false;
     }
 
-    return !((this.left >= actor.right) || (actor.left >= this.right) || (this.top >= actor.bottom) || (actor.top >= this.bottom));  
+    return (this.left < actor.right && this.right > actor.left && this.top < actor.bottom && this.bottom > actor.top);  
   }
 }
 
